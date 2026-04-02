@@ -4,7 +4,7 @@
   "publisher": "medalibs",
   "license": "MIT",
   "description": "🚀 Visualize PHPUnit code coverage in real-time. Boost your testing confidence with beautiful line highlighting.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "repository": {
     "type": "git",
     "url": "https://github.com/medalibs/visualize-phpunit-coverage.git"
