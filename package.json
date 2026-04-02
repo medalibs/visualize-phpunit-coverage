@@ -1,19 +1,20 @@
 {
   "name": "phpunit-coverage",
   "displayName": "PHPUnit Coverage",
-  "publisher": "MohamedAliBenSlama",
+  "publisher": "medalibs",
   "license": "MIT",
   "description": "🚀 Visualize PHPUnit code coverage in real-time. Boost your testing confidence with beautiful line highlighting.",
   "version": "0.0.2",
   "repository": {
     "type": "git",
-    "url": "https://github.com/votre-utilisateur/votre-projet.git"
+    "url": "https://github.com/medalibs/visualize-phpunit-coverage.git"
   },
   "engines": {
     "vscode": "^1.107.0"
   },
   "categories": [
-    "Other"
+    "Testing",
+    "Visualization"
   ],
   "activationEvents": [
     "onStartupFinished"
