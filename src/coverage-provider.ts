@@ -36,16 +36,16 @@ export class CoverageProvider {
         const config = vscode.workspace.getConfiguration('phpunit-coverage');
         const cloverPath = config.get<string>('cloverPath') || '**/clover.xml';
 
-        // On cherche le fichier de couverture spécifié
+        // Searching for the specified coverage file
         const files = await vscode.workspace.findFiles(cloverPath, '**/node_modules/**');
         if (files.length === 0) {
-            console.log(`PHPUnit Coverage: Aucun fichier trouvé pour : ${cloverPath}`);
-            vscode.window.showWarningMessage(`Aucun fichier de couverture trouvé pour le chemin : ${cloverPath}`);
+            console.log(`PHPUnit Coverage: No file found for: ${cloverPath}`);
+            vscode.window.showWarningMessage(`No coverage file found for path: ${cloverPath}`);
             return;
         }
 
         const reportPath = files[0].fsPath;
-        console.log(`PHPUnit Coverage: Utilisation du rapport : ${reportPath}`);
+        console.log(`PHPUnit Coverage: Using report: ${reportPath}`);
         
         this.loadReport(reportPath);
         this.decorateVisibleEditors();
@@ -67,7 +67,7 @@ export class CoverageProvider {
                 
                 const cov: FileCoverage = { covered: [], uncovered: [] };
                 lines.forEach((l: any) => {
-                    // Certains rapports n'ont pas type="stmt" ou utilisent d'autres types
+                    // Some reports don't have type="stmt" or use other types
                     if (l?.num && l.count !== undefined) {
                         const num = Number.parseInt(l.num) - 1;
                         if (Number.parseInt(l.count) > 0) {
@@ -78,12 +78,12 @@ export class CoverageProvider {
                     }
                 });
                 this.coverageMap.set(fileName, cov);
-                console.log(`PHPUnit Coverage: Chargé : ${fileName} (${cov.covered.length} couvertes, ${cov.uncovered.length} non couvertes)`);
+                console.log(`PHPUnit Coverage: Loaded: ${fileName} (${cov.covered.length} covered, ${cov.uncovered.length} uncovered)`);
             };
 
             const coverage = result.coverage;
             if (!coverage) {
-                console.log('PHPUnit Coverage: Structure XML invalide (pas de tag <coverage>)');
+                console.log('PHPUnit Coverage: Invalid XML structure (no <coverage> tag)');
                 return;
             }
 
@@ -108,10 +108,10 @@ export class CoverageProvider {
                 }
             });
 
-            vscode.window.showInformationMessage(`Couverture chargée pour ${this.coverageMap.size} fichiers.`);
+            vscode.window.showInformationMessage(`Coverage loaded for ${this.coverageMap.size} files.`);
         } catch (e) {
-            console.error('PHPUnit Coverage: Erreur critique lors du parsing', e);
-            vscode.window.showErrorMessage('Erreur lors de la lecture du rapport: ' + e);
+            console.error('PHPUnit Coverage: Critical error during parsing', e);
+            vscode.window.showErrorMessage('Error reading report: ' + e);
         }
     }
 
@@ -120,7 +120,7 @@ export class CoverageProvider {
         const showDecorations = config.get<boolean>('showDecorations') !== false;
 
         if (this.coverageMap.size === 0 || !showDecorations) {
-            console.log('PHPUnit Coverage: Masquage ou aucune donnée de couverture.');
+            console.log('PHPUnit Coverage: Hiding or no coverage data.');
             vscode.window.visibleTextEditors.forEach(editor => {
                 editor.setDecorations(this.coveredDecorator, []);
                 editor.setDecorations(this.uncoveredDecorator, []);
@@ -130,18 +130,18 @@ export class CoverageProvider {
 
         vscode.window.visibleTextEditors.forEach(editor => {
             const fileName = editor.document.fileName.replace(/\\/g, '/');
-            console.log(`PHPUnit Coverage: Tentative de décoration pour : ${fileName}`);
+            console.log(`PHPUnit Coverage: Attempting decoration for: ${fileName}`);
             
             let coverage = this.coverageMap.get(fileName);
             
             if (!coverage) {
-                // On cherche une correspondance par la fin du chemin (ex: src/Calculatrice.php)
-                // On normalise les chemins pour la comparaison
+                // Look for a match by path suffix (e.g., src/Calculator.php)
+                // Normalize paths for comparison
                 for (const [xmlPath, data] of this.coverageMap.entries()) {
                     const normalizedXmlPath = xmlPath.replace(/\\/g, '/');
                     
-                    // Si le chemin VS Code finit par le chemin XML ou vice-versa
-                    // On prend au moins les deux derniers segments pour éviter les faux positifs (ex: Index.php)
+                    // If the VS Code path ends with the XML path or vice-versa
+                    // Take at least the last two segments to avoid false positives (e.g., Index.php)
                     const xmlSegments = normalizedXmlPath.split('/');
                     const fileSegments = fileName.split('/');
                     
@@ -151,7 +151,7 @@ export class CoverageProvider {
 
                     if (xmlSuffix === fileSuffix && xmlSuffix.length > 0) {
                         coverage = data;
-                        console.log(`PHPUnit Coverage: Correspondance trouvée par suffixe : ${normalizedXmlPath}`);
+                        console.log(`PHPUnit Coverage: Match found by suffix: ${normalizedXmlPath}`);
                         break;
                     }
                 }
@@ -169,9 +169,9 @@ export class CoverageProvider {
 
                 editor.setDecorations(this.coveredDecorator, coveredRanges);
                 editor.setDecorations(this.uncoveredDecorator, uncoveredRanges);
-                console.log(`PHPUnit Coverage: Appliqué (${coveredRanges.length} couvertes, ${uncoveredRanges.length} non couvertes) à ${fileName}`);
+                console.log(`PHPUnit Coverage: Applied (${coveredRanges.length} covered, ${uncoveredRanges.length} uncovered) to ${fileName}`);
             } else {
-                console.log(`PHPUnit Coverage: Aucune donnée trouvée dans le rapport pour ${fileName}`);
+                console.log(`PHPUnit Coverage: No data found in report for ${fileName}`);
                 editor.setDecorations(this.coveredDecorator, []);
                 editor.setDecorations(this.uncoveredDecorator, []);
             }
