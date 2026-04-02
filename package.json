@@ -1,0 +1,70 @@
+{
+  "name": "phpunit-coverage",
+  "displayName": "PHPUnit Coverage",
+  "publisher": "MohamedAliBenSlama",
+  "license": "MIT",
+  "description": "🚀 Visualize PHPUnit code coverage in real-time. Boost your testing confidence with beautiful line highlighting.",
+  "version": "0.0.2",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/votre-utilisateur/votre-projet.git"
+  },
+  "engines": {
+    "vscode": "^1.107.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "phpunit-coverage.showCoverage",
+        "title": "PHPUnit: Show Coverage"
+      },
+      {
+        "command": "phpunit-coverage.toggleCoverage",
+        "title": "PHPUnit: Toggle Coverage Highlights"
+      }
+    ],
+    "configuration": {
+      "title": "PHPUnit Coverage",
+      "properties": {
+        "phpunit-coverage.cloverPath": {
+          "type": "string",
+          "default": "**/clover.xml",
+          "description": "Path to the PHPUnit Clover XML report file (e.g., coverage/clover.xml or **/clover.xml)."
+        },
+        "phpunit-coverage.showDecorations": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show/hide code coverage highlights in the editor."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@types/vscode": "^1.107.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.39.3",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.5.9"
+  }
+}
