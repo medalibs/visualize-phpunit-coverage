@@ -40,6 +40,12 @@ This extension contributes the following settings:
 
 ## 📝 Release Notes
 
+### 0.0.3
+
+- 🌐 **Internationalization**: Translated all notifications and code comments to English.
+- 🛣️ **Path Normalization**: Improved path matching logic for Windows/Linux compatibility.
+- 🩺 **Bug Fix**: Fixed issue with report parsing in certain workspace structures.
+
 ### 0.0.2
 
 - ✨ **New Design**: Added a screenshot and improved the overall documentation.
