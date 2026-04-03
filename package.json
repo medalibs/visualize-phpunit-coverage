@@ -4,7 +4,8 @@
   "publisher": "medalibs",
   "license": "MIT",
   "description": "🚀 Visualize PHPUnit code coverage in real-time. Boost your testing confidence with beautiful line highlighting.",
-  "version": "0.0.3",
+  "icon": "resources/icon.png",
+  "version": "0.0.4",
   "repository": {
     "type": "git",
     "url": "https://github.com/medalibs/visualize-phpunit-coverage.git"
@@ -29,6 +30,14 @@
       {
         "command": "phpunit-coverage.toggleCoverage",
         "title": "PHPUnit: Toggle Coverage Highlights"
+      },
+      {
+        "command": "phpunit-coverage.sendToAgent",
+        "title": "Send to Agent"
+      },
+      {
+        "command": "phpunit-coverage.sendAllToAgent",
+        "title": "Send all to Agent"
       }
     ],
     "configuration": {
@@ -43,8 +52,28 @@
           "type": "boolean",
           "default": true,
           "description": "Show/hide code coverage highlights in the editor."
+        },
+        "phpunit-coverage.showInProblems": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show uncovered lines in the Problems tab."
         }
       }
+    },
+    "menus": {
+      "problems/toolbar": [
+        {
+          "command": "phpunit-coverage.sendAllToAgent",
+          "when": "config.phpunit-coverage.showInProblems"
+        }
+      ],
+      "problems/item/context": [
+        {
+          "command": "phpunit-coverage.sendToAgent",
+          "when": "config.phpunit-coverage.showInProblems",
+          "group": "inline"
+        }
+      ]
     }
   },
   "scripts": {

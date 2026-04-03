@@ -11,6 +11,7 @@ export class CoverageProvider {
     private readonly coverageMap: Map<string, FileCoverage> = new Map();
     private readonly coveredDecorator: vscode.TextEditorDecorationType;
     private readonly uncoveredDecorator: vscode.TextEditorDecorationType;
+    private readonly diagnosticCollection: vscode.DiagnosticCollection;
 
     constructor() {
         this.coveredDecorator = vscode.window.createTextEditorDecorationType({
@@ -26,6 +27,8 @@ export class CoverageProvider {
             backgroundColor: 'rgba(244, 67, 54, 0.35)',
             isWholeLine: true,
         });
+
+        this.diagnosticCollection = vscode.languages.createDiagnosticCollection('phpunit-coverage');
     }
 
     public async refresh() {
@@ -48,6 +51,7 @@ export class CoverageProvider {
         console.log(`PHPUnit Coverage: Using report: ${reportPath}`);
         
         this.loadReport(reportPath);
+        await this.updateDiagnostics();
         this.decorateVisibleEditors();
     }
 
@@ -115,6 +119,70 @@ export class CoverageProvider {
         }
     }
 
+    public async updateDiagnostics() {
+        this.diagnosticCollection.clear();
+        const config = vscode.workspace.getConfiguration('phpunit-coverage');
+        const showInProblems = config.get<boolean>('showInProblems') !== false;
+
+        if (!showInProblems) {
+            return;
+        }
+
+        for (const [xmlPath, data] of this.coverageMap.entries()) {
+            const uri = await this.resolveFileUri(xmlPath);
+            if (uri) {
+                const diagnostics: vscode.Diagnostic[] = data.uncovered.map(line => {
+                    const range = new vscode.Range(line, 0, line, 0);
+                    const diagnostic = new vscode.Diagnostic(
+                        range,
+                        'PHPUnit: Uncovered line',
+                        vscode.DiagnosticSeverity.Information
+                    );
+                    diagnostic.source = 'PHPUnit Coverage';
+                    diagnostic.code = 'uncovered-line';
+                    return diagnostic;
+                });
+                this.diagnosticCollection.set(uri, diagnostics);
+            }
+        }
+    }
+
+    private async resolveFileUri(xmlPath: string): Promise<vscode.Uri | undefined> {
+        const normalizedXmlPath = xmlPath.replace(/\\/g, '/');
+        
+        // Try direct absolute path
+        if (fs.existsSync(normalizedXmlPath)) {
+            return vscode.Uri.file(normalizedXmlPath);
+        }
+
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders) return undefined;
+
+        // Try relative to workspace folders
+        for (const folder of workspaceFolders) {
+            const fullPath = vscode.Uri.joinPath(folder.uri, normalizedXmlPath).fsPath;
+            if (fs.existsSync(fullPath)) {
+                return vscode.Uri.file(fullPath);
+            }
+        }
+
+        // Try suffix matching (best effort)
+        const xmlSegments = normalizedXmlPath.split('/');
+        if (xmlSegments.length === 0) return undefined;
+
+        // We try to find the file in the workspace that ends with the same suffix
+        // Use a heuristic: last 2 segments (e.g. src/Controller.php)
+        const minSegments = Math.min(xmlSegments.length, 2);
+        const suffix = xmlSegments.slice(-minSegments).join('/');
+        
+        const foundFiles = await vscode.workspace.findFiles(`**/${suffix}`);
+        if (foundFiles.length > 0) {
+            return foundFiles[0];
+        }
+
+        return undefined;
+    }
+
     public decorateVisibleEditors() {
         const config = vscode.workspace.getConfiguration('phpunit-coverage');
         const showDecorations = config.get<boolean>('showDecorations') !== false;
@@ -128,50 +196,34 @@ export class CoverageProvider {
             return;
         }
 
-        vscode.window.visibleTextEditors.forEach(editor => {
+        vscode.window.visibleTextEditors.forEach(async editor => {
             const fileName = editor.document.fileName.replace(/\\/g, '/');
-            console.log(`PHPUnit Coverage: Attempting decoration for: ${fileName}`);
             
             let coverage = this.coverageMap.get(fileName);
             
             if (!coverage) {
-                // Look for a match by path suffix (e.g., src/Calculator.php)
-                // Normalize paths for comparison
-                for (const [xmlPath, data] of this.coverageMap.entries()) {
-                    const normalizedXmlPath = xmlPath.replace(/\\/g, '/');
-                    
-                    // If the VS Code path ends with the XML path or vice-versa
-                    // Take at least the last two segments to avoid false positives (e.g., Index.php)
-                    const xmlSegments = normalizedXmlPath.split('/');
-                    const fileSegments = fileName.split('/');
-                    
-                    const minSegments = Math.min(xmlSegments.length, fileSegments.length, 2);
-                    const xmlSuffix = xmlSegments.slice(-minSegments).join('/');
-                    const fileSuffix = fileSegments.slice(-minSegments).join('/');
-
-                    if (xmlSuffix === fileSuffix && xmlSuffix.length > 0) {
-                        coverage = data;
-                        console.log(`PHPUnit Coverage: Match found by suffix: ${normalizedXmlPath}`);
-                        break;
+                // Use the same resolution logic as diagnostics
+                const uri = await this.resolveFileUri(fileName);
+                if (uri) {
+                    // Try to find if this uri corresponds to any entry in our map
+                    // Since resolveFileUri mapping is one-way, we might need to search the map
+                    for (const [xmlPath, data] of this.coverageMap.entries()) {
+                        const resolvedXmlUri = await this.resolveFileUri(xmlPath);
+                        if (resolvedXmlUri?.toString() === editor.document.uri.toString()) {
+                            coverage = data;
+                            break;
+                        }
                     }
                 }
             }
 
             if (coverage) {
-                const coveredRanges = coverage.covered.map(l => {
-                    const range = new vscode.Range(l, 0, l, 0);
-                    return range;
-                });
-                const uncoveredRanges = coverage.uncovered.map(l => {
-                    const range = new vscode.Range(l, 0, l, 0);
-                    return range;
-                });
+                const coveredRanges = coverage.covered.map(l => new vscode.Range(l, 0, l, 0));
+                const uncoveredRanges = coverage.uncovered.map(l => new vscode.Range(l, 0, l, 0));
 
                 editor.setDecorations(this.coveredDecorator, coveredRanges);
                 editor.setDecorations(this.uncoveredDecorator, uncoveredRanges);
-                console.log(`PHPUnit Coverage: Applied (${coveredRanges.length} covered, ${uncoveredRanges.length} uncovered) to ${fileName}`);
             } else {
-                console.log(`PHPUnit Coverage: No data found in report for ${fileName}`);
                 editor.setDecorations(this.coveredDecorator, []);
                 editor.setDecorations(this.uncoveredDecorator, []);
             }
@@ -181,5 +233,6 @@ export class CoverageProvider {
     public dispose() {
         this.coveredDecorator.dispose();
         this.uncoveredDecorator.dispose();
+        this.diagnosticCollection.dispose();
     }
 }

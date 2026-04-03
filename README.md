@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="resources/icon.png" width="128" alt="PHPUnit Coverage Icon">
+</p>
+
 # PHPUnit Coverage for VS Code
 
 Visualize your PHPUnit code coverage directly in your editor. This extension parses `clover.xml` reports to highlight covered and uncovered lines, providing instant feedback on your test results.
@@ -10,6 +14,8 @@ Visualize your PHPUnit code coverage directly in your editor. This extension par
 - **🔄 Auto-Sync**: The extension watches your `clover.xml` and updates decorations as soon as you run your tests.
 - **🛠️ Zero Config**: Works out of the box with standard Clover XML reports.
 - **⚡ Performance-Minded**: Efficiently parses reports without slowing down your editor.
+- **🔎 Problems Tab**: List all uncovered lines in the VS Code "Problems" tab for a project-wide overview.
+- **🤖 Agent Integration**: Quickly send uncovered code to an AI agent for help (via Problems tab or Code Actions).
 
 ## 🛠️ Extension Settings
 
@@ -17,6 +23,7 @@ This extension contributes the following settings:
 
 * `phpunit-coverage.cloverPath`: Path to the PHPUnit Clover XML report file. Supports glob patterns (default: `**/clover.xml`).
 * `phpunit-coverage.showDecorations`: Show or hide code coverage highlights in the editor (default: `true`).
+* `phpunit-coverage.showInProblems`: Show uncovered lines in the "Problems" tab (default: `true`).
 
 ## ⌨️ Commands
 
@@ -39,6 +46,13 @@ This extension contributes the following settings:
 - Path mapping between the report and the workspace might need adjustment if running tests in Docker/VMs.
 
 ## 📝 Release Notes
+
+### 0.0.4
+
+- 🩺 **Problems Tab Integration**: Visualize all uncovered lines in the "Problems" tab for easier navigation.
+- 🤖 **AI Agent Integration**: Added "Send to Agent" actions in the Problems view and as a Quick Fix (lightbulb) on uncovered lines.
+- 🛣️ **Improved Path Mapping**: Enhanced support for Docker and remote environments through better path resolution logic.
+- ⚙️ **New Setting**: Control the visibility of uncovered lines in the Problems tab with `phpunit-coverage.showInProblems`.
 
 ### 0.0.3
 
